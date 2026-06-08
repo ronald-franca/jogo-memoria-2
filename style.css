@@ -1,0 +1,60 @@
+* {
+  background: #f4dfad;
+}
+
+.overlay,
+.victory {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+.logo,
+.victory-logo {
+  width: 220px;
+  margin-bottom: 20px;
+}
+
+button {
+  margin-top: 20px;
+  padding: 15px 35px;
+  border: none;
+  border-radius: 15px;
+  background: #5d7d1d;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+#countdown {
+  font-size: 120px;
+  font-weight: bold;
+}
+
+.stats {
+  display: flex;
+  gap: 40px;
+  margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+  .game-board {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #countdown {
+    font-size: 80px;
+  }
+}
