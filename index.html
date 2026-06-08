@@ -86,16 +86,22 @@
     }
 
     .game-board{
-        width:min(96vw, 760px);
-        display:grid;
-        grid-template-columns:repeat(4, var(--card-size));
-        grid-auto-rows:var(--card-size);
-        justify-content:center;
-        gap:12px;
-        margin-top:4px;
+    width:95vw;
+
+    display:grid;
+
+    grid-template-columns:repeat(2, 1fr);
+
+    gap:8px;
+
+    justify-content:center;
     }
 
     @media(max-width:800px){
+       .card{
+    width:100%;
+    aspect-ratio:1/1;
+}
         .logo{
             width:110px;
         }
