@@ -21,8 +21,6 @@
         --silver:#7c8a99;
         --bronze:#a66a3f;
         --success:#2d9b45;
-        --card-size:160px;
-        --card-size-mobile:clamp(70px, 21vw, 104px);
     }
 
     body{
@@ -35,7 +33,7 @@
         flex-direction:column;
         align-items:center;
         justify-content:flex-start;
-        padding:clamp(10px, 2vw, 22px);
+        padding:clamp(8px, 2vw, 20px);
         overflow:hidden;
     }
 
@@ -43,7 +41,7 @@
         width:100%;
         display:flex;
         justify-content:center;
-        margin-bottom:20px;
+        margin-bottom:12px;
     }
 
     .logo{
@@ -57,7 +55,7 @@
     .top-info{
         display:flex;
         gap:16px;
-        margin-bottom:14px;
+        margin-bottom:12px;
         flex-wrap:wrap;
         justify-content:center;
         align-items:stretch;
@@ -86,66 +84,20 @@
     }
 
     .game-board{
-    width:95vw;
-
-    display:grid;
-
-    grid-template-columns:repeat(2, 1fr);
-
-    gap:8px;
-
-    justify-content:center;
-    }
-
-    @media(max-width:800px){
-       .card{
-    width:100%;
-    aspect-ratio:1/1;
-}
-        .logo{
-            width:110px;
-        }
-
-        .top-info{
-            gap:10px;
-            margin-bottom:10px;
-        }
-
-        .info-box{
-            min-width:120px;
-            padding:8px 12px;
-        }
-
-        .info-title{
-            font-size:12px;
-            margin-bottom:4px;
-        }
-
-        .info-value{
-            font-size:22px;
-        }
-
-        .game-board{
-            width:95vw;
-
-    display:grid;
-
-    grid-template-columns:repeat(2, 1fr);
-    grid-template-rows:repeat(4, 1fr);
-
-    gap:8px;
-
-    justify-content:center;
-        }
+        width:min(96vw, 760px);
+        display:grid;
+        grid-template-columns:repeat(4, minmax(0, 1fr));
+        gap:12px;
+        justify-content:center;
+        margin-top:4px;
     }
 
     .card{
-       width:100%;
-    height:100%;
-    aspect-ratio:1/1;
-    perspective:1000px;
-    cursor:pointer;
-    touch-action:manipulation;
+        width:100%;
+        aspect-ratio:1/1;
+        perspective:1000px;
+        cursor:pointer;
+        touch-action:manipulation;
     }
 
     .card-inner{
@@ -193,10 +145,10 @@
     .card-back img{
         width:100%;
         height:100%;
-        object-fit:contain;
+        object-fit:cover;
         display:block;
         background:#fff;
-        padding:8px;
+        padding:4px;
     }
 
     .card-back{
@@ -268,8 +220,8 @@
         display:none !important;
     }
 
-
-    .preGameOverlay, #preGameOverlay{
+    .preGameOverlay,
+    #preGameOverlay{
         z-index:2100;
     }
 
@@ -414,6 +366,58 @@
         100%{ transform:rotateY(180deg) scale(1); }
     }
 
+    @media(max-width:800px){
+        .logo{
+            width:90px;
+        }
+
+        .top-info{
+            gap:8px;
+            margin-bottom:8px;
+        }
+
+        .info-box{
+            min-width:110px;
+            padding:6px 10px;
+        }
+
+        .info-title{
+            font-size:11px;
+            margin-bottom:2px;
+        }
+
+        .info-value{
+            font-size:20px;
+        }
+
+        .game-board{
+            width:96vw;
+            display:grid;
+            grid-template-columns:repeat(4, minmax(0, 1fr));
+            gap:6px;
+            justify-content:center;
+            margin-top:2px;
+        }
+
+        .card{
+            width:100%;
+            aspect-ratio:1/1;
+        }
+
+        .card-front img,
+        .card-back img{
+            object-fit:cover;
+            padding:3px;
+        }
+
+        .music-button{
+            top:8px;
+            right:8px;
+            padding:8px 10px;
+            font-size:12px;
+        }
+    }
+
     @media(max-width:420px){
         .overlay-content{
             padding:28px 18px;
@@ -425,13 +429,6 @@
 
         .victory-stats{
             grid-template-columns:1fr;
-        }
-
-        .music-button{
-            top:12px;
-            right:12px;
-            padding:11px 14px;
-            font-size:14px;
         }
     }
 </style>
@@ -721,7 +718,6 @@
         };
     }
 
-
     function startPreGameCountdown(){
         startScreen.classList.add('hidden');
         preGameOverlay.classList.remove('hidden');
@@ -823,154 +819,134 @@
 
     async function createShareImage(){
 
-    const rank = getRank(attempts, gameSeconds);
+        const rank = getRank(attempts, gameSeconds);
 
-    const templateMap = {
-        gold: 'assets/story-ouro.png',
-        silver: 'assets/story-prata.png',
-        bronze: 'assets/story-bronze.png'
-    };
+        const templateMap = {
+            gold: 'assets/story-ouro.png',
+            silver: 'assets/story-prata.png',
+            bronze: 'assets/story-bronze.png'
+        };
 
-    const templateSrc =
-        templateMap[rank.className] || templateMap.gold;
+        const templateSrc =
+            templateMap[rank.className] || templateMap.gold;
 
-    const canvas = shareCanvas;
-    const ctx = shareCtx;
+        const canvas = shareCanvas;
+        const ctx = shareCtx;
 
-    canvas.width = 1080;
-    canvas.height = 1920;
+        canvas.width = 1080;
+        canvas.height = 1920;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // =========================
-    // FUNDO ORIGINAL
-    // =========================
+        const template = await loadImage(templateSrc);
 
-    const template = await loadImage(templateSrc);
+        ctx.drawImage(
+            template,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
 
-    ctx.drawImage(
-        template,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+        ctx.fillStyle = '#c47e16';
+        ctx.font = 'bold 52px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
-    // =========================
-    // TEMPO
-    // =========================
+        ctx.fillText(
+            formatTime(gameSeconds),
+            310,
+            625
+        );
 
-    ctx.fillStyle = '#c47e16';
+        ctx.fillText(
+            String(attempts).padStart(2, '0'),
+            770,
+            625
+        );
 
-    ctx.font = 'bold 52px Arial';
+        if(profilePhotoDataUrl){
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+            try{
 
-    ctx.fillText(
-        formatTime(gameSeconds),
-        310,
-        625
-    );
+                const userImg =
+                    await loadImage(profilePhotoDataUrl);
 
-    // =========================
-    // TENTATIVAS
-    // =========================
+                const centerX = 305;
+                const centerY = 1460;
+                const radius = 225;
 
-    ctx.fillText(
-        String(attempts).padStart(2, '0'),
-        770,
-        625
-    );
+                ctx.save();
 
-    // =========================
-    // FOTO DO PERFIL
-    // =========================
+                ctx.beginPath();
 
-    if(profilePhotoDataUrl){
+                ctx.arc(
+                    centerX,
+                    centerY,
+                    radius,
+                    0,
+                    Math.PI * 2
+                );
 
-        try{
+                ctx.closePath();
 
-            const userImg =
-                await loadImage(profilePhotoDataUrl);
+                ctx.clip();
 
-            const centerX = 305;
-            const centerY = 1460;
-            const radius = 225;
+                const imgRatio =
+                    userImg.width / userImg.height;
 
-            ctx.save();
+                const boxSize = radius * 2;
 
-            ctx.beginPath();
+                let drawWidth;
+                let drawHeight;
 
-            ctx.arc(
-                centerX,
-                centerY,
-                radius,
-                0,
-                Math.PI * 2
-            );
+                if(imgRatio > 1){
 
-            ctx.closePath();
+                    drawHeight = boxSize;
+                    drawWidth = userImg.width *
+                        (boxSize / userImg.height);
 
-            ctx.clip();
+                }else{
 
-            // COVER
-            const imgRatio =
-                userImg.width / userImg.height;
+                    drawWidth = boxSize;
+                    drawHeight = userImg.height *
+                        (boxSize / userImg.width);
+                }
 
-            const boxSize = radius * 2;
+                const offsetX =
+                    centerX - drawWidth / 2;
 
-            let drawWidth;
-            let drawHeight;
+                const offsetY =
+                    centerY - drawHeight / 2;
 
-            if(imgRatio > 1){
+                ctx.drawImage(
+                    userImg,
+                    offsetX,
+                    offsetY,
+                    drawWidth,
+                    drawHeight
+                );
 
-                drawHeight = boxSize;
-                drawWidth = userImg.width *
-                    (boxSize / userImg.height);
+                ctx.restore();
 
-            }else{
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 12;
 
-                drawWidth = boxSize;
-                drawHeight = userImg.height *
-                    (boxSize / userImg.width);
-            }
+                ctx.beginPath();
 
-            const offsetX =
-                centerX - drawWidth / 2;
+                ctx.arc(
+                    centerX,
+                    centerY,
+                    radius,
+                    0,
+                    Math.PI * 2
+                );
 
-            const offsetY =
-                centerY - drawHeight / 2;
+                ctx.stroke();
 
-            ctx.drawImage(
-                userImg,
-                offsetX,
-                offsetY,
-                drawWidth,
-                drawHeight
-            );
-
-            ctx.restore();
-
-            // BORDA
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 12;
-
-            ctx.beginPath();
-
-            ctx.arc(
-                centerX,
-                centerY,
-                radius,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.stroke();
-
-        }catch(e){}
+            }catch(e){}
+        }
     }
-}
 
     async function shareToStories(){
         try{
