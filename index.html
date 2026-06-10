@@ -244,7 +244,7 @@
 
     @keyframes logoPulse{
         0%{ transform:scale(1); opacity:1; }
-        50%{ transform:scale(1.04); opacity:.95; }
+        50%{ transform:scale(1.05); opacity:.9; }
         100%{ transform:scale(1); opacity:1; }
     }
 
@@ -346,6 +346,10 @@
         background:var(--accent);
         color:white;
         padding:14px 18px;
+        border:none;
+        cursor:pointer;
+        border-radius:12px;
+        font-size:16px;
     }
 
     .player-name-input{
@@ -376,7 +380,6 @@
         100%{ transform:rotateY(180deg) scale(1); }
     }
 
-    /* Ajuste responsivo de visualização móvel sem scroll */
     @media(max-width:800px){
         body{
             padding:6px;
@@ -494,7 +497,7 @@
 <div class="overlay hidden" id="victoryOverlay">
     <div class="overlay-content">
         <h1>Parabéns 🎉</h1>
-        <p>Você encontrou todos os cores!</p>
+        <p>Você encontrou todos os pares!</p>
 
         <input
             type="text"
@@ -530,7 +533,7 @@
     </div>
 </div>
 
-<canvas id="shareCanvas" width="1080" height="1920"></canvas>
+<canvas id="shareCanvas" width="941" height="1672"></canvas>
 
 <audio id="flipSound" src="sounds/flip.mp3" preload="auto"></audio>
 <audio id="matchSound" src="sounds/match.mp3" preload="auto"></audio>
