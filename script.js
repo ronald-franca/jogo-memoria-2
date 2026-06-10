@@ -175,6 +175,7 @@ function getRank(attemptsValue, timeValue) {
       message: 'Excelente memória! Você encontrou os pares com muito controle.'
     };
   }
+
   if (timeValue <= 60 && attemptsValue <= 10) {
     return {
       label: 'PRATA',
@@ -182,6 +183,7 @@ function getRank(attemptsValue, timeValue) {
       message: 'Muito bem! Você teve uma boa estratégia durante o jogo.'
     };
   }
+
   return {
     label: 'BRONZE',
     className: 'bronze',
@@ -215,9 +217,10 @@ function initGameplay() {
   gameSeconds = 0;
   firstCard = null;
   secondCard = null;
-  lockBoard = false; // Cartas começam viradas para baixo prontas para o jogo direto
+  lockBoard = false;
 
   attemptsElement.textContent = attempts;
+  gameTimerView.textContent = formatTime(gameSeconds);
   victoryOverlay.classList.add('hidden');
 
   startGameTimer();
@@ -227,10 +230,32 @@ function restartGame() {
   location.reload();
 }
 
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function fitText(ctx, text, maxWidth, initialFontSize, fontFamily = 'Arial') {
+  let size = initialFontSize;
+  ctx.font = `bold ${size}px ${fontFamily}`;
+  while (ctx.measureText(text).width > maxWidth && size > 14) {
+    size -= 1;
+    ctx.font = `bold ${size}px ${fontFamily}`;
+  }
+  return size;
+}
+
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    if (!src.startsWith('data:')) {
+      img.crossOrigin = 'anonymous';
+    }
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src.startsWith('data:') ? src : `${src}?v=${Date.now()}`;
@@ -257,7 +282,6 @@ function canvasToBlob(canvas) {
 async function createShareImage() {
   const rank = getRank(attempts, gameSeconds);
 
-  // Mapeamento dos templates limpos gerados (sem textos dinâmicos por baixo)
   const templateMap = {
     gold: 'assets/3.png',
     silver: 'assets/4.png',
@@ -265,29 +289,54 @@ async function createShareImage() {
   };
 
   const templateSrc = templateMap[rank.className] || templateMap.gold;
+  const template = await loadImage(templateSrc);
+
   const canvas = shareCanvas;
   const ctx = shareCtx;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  canvas.width = template.width;
+  canvas.height = template.height;
 
-  const template = await loadImage(templateSrc);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
 
-  const playerName = (playerNameInput?.value || '').trim() || 'Jogador';
+  const name = (playerNameInput && playerNameInput.value ? playerNameInput.value : '').trim() || 'Jogador';
 
-  // Configuração estilizada do texto para casar com a identidade marrom/terrosa do app
-  ctx.fillStyle = '#be7612'; 
+  const W = canvas.width;
+  const H = canvas.height;
+
+  const brown = '#6d3f07';
+  const white = '#ffffff';
+
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  ctx.fillStyle = white;
+  ctx.strokeStyle = 'rgba(0,0,0,0)';
 
-  // 1. Escreve o Nome do Jogador no meio da primeira caixinha branca
-  ctx.font = 'bold 54px Arial';
-  ctx.fillText(playerName, 540, 642);
+  // Limpa o texto placeholder do nome e escreve o nome real
+  drawRoundedRect(ctx, W * 0.154, H * 0.244, W * 0.692, H * 0.077, 28);
+  ctx.fill();
 
-  // 2. Escreve o Tempo e as Tentativas lado a lado nas caixinhas do meio
-  ctx.font = 'bold 56px Arial';
-  ctx.fillText(formatTime(gameSeconds), 340, 856);
-  ctx.fillText(String(attempts).padStart(2, '0'), 740, 856);
+  ctx.fillStyle = brown;
+  const nameFont = fitText(ctx, name, W * 0.60, Math.round(H * 0.035), 'Arial');
+  ctx.font = `bold ${nameFont}px Arial`;
+  ctx.fillText(name, W * 0.5, H * 0.283);
+
+  // Limpa os blocos de tempo e tentativas para reescrever os valores
+  drawRoundedRect(ctx, W * 0.144, H * 0.366, W * 0.330, H * 0.136, 24);
+  ctx.fill();
+
+  drawRoundedRect(ctx, W * 0.529, H * 0.366, W * 0.330, H * 0.136, 24);
+  ctx.fill();
+
+  ctx.fillStyle = brown;
+  ctx.font = `bold ${Math.round(H * 0.018)}px Arial`;
+  ctx.fillText('Tempo', W * 0.31, H * 0.398);
+  ctx.fillText('Tentativas', W * 0.69, H * 0.398);
+
+  ctx.font = `bold ${Math.round(H * 0.052)}px Arial`;
+  ctx.fillText(formatTime(gameSeconds), W * 0.31, H * 0.447);
+  ctx.fillText(String(attempts).padStart(2, '0'), W * 0.69, H * 0.447);
 }
 
 async function shareToStories() {
