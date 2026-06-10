@@ -73,7 +73,7 @@ function createBoard() {
 
   cards.forEach(image => {
     const card = document.createElement('div');
-    card.classList.add('card');
+    card.classList.add('card', 'flipped');
     card.dataset.image = image;
 
     card.innerHTML = `
@@ -99,22 +99,16 @@ function hideCards() {
 }
 
 function startGameTimer() {
-
   if (gameTimer) {
     clearInterval(gameTimer);
   }
 
   gameSeconds = 0;
-
   gameTimerView.textContent = '00:00';
 
   gameTimer = setInterval(() => {
-
     gameSeconds++;
-
-    gameTimerView.textContent =
-      formatTime(gameSeconds);
-
+    gameTimerView.textContent = formatTime(gameSeconds);
   }, 1000);
 }
 
@@ -230,7 +224,6 @@ function startPreGameCountdown() {
 }
 
 function initGameplay() {
-
   createBoard();
 
   attempts = 0;
@@ -240,52 +233,33 @@ function initGameplay() {
   firstCard = null;
   secondCard = null;
 
-  lockBoard = true;
-
   attemptsElement.textContent = attempts;
   victoryOverlay.classList.add('hidden');
+
+  lockBoard = true;
 
   if (previewTimer) clearInterval(previewTimer);
   if (gameTimer) clearInterval(gameTimer);
 
-  const allCards = document.querySelectorAll('.card');
+  let previewTime = 10;
+  gameTimerView.textContent = String(previewTime);
 
-  // força renderização antes de virar
-  setTimeout(() => {
+  previewTimer = setInterval(() => {
+    previewTime--;
+    gameTimerView.textContent = String(previewTime);
 
-    allCards.forEach(card => {
-      card.classList.add('flipped');
-    });
+    if (previewTime <= 0) {
+      clearInterval(previewTimer);
 
-    let previewTime = 10;
+      document.querySelectorAll('.card').forEach(card => {
+        card.classList.remove('flipped');
+      });
 
-    gameTimerView.textContent = previewTime;
-
-    previewTimer = setInterval(() => {
-
-      previewTime--;
-
-      gameTimerView.textContent = previewTime;
-
-      if (previewTime <= 0) {
-
-        clearInterval(previewTimer);
-
-        allCards.forEach(card => {
-          card.classList.remove('flipped');
-        });
-
-        lockBoard = false;
-
-        startGameTimer();
-      }
-
-    }, 1000);
-
-  }, 100);
+      lockBoard = false;
+      startGameTimer();
+    }
+  }, 1000);
 }
-
-
 
 function restartGame() {
   location.reload();
