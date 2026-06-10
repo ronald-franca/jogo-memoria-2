@@ -41,6 +41,7 @@ let lockBoard = true;
 let attempts = 0;
 let matches = 0;
 
+let previewTimer = null;
 let gameTimer = null;
 let gameSeconds = 0;
 let musicMuted = false;
@@ -91,10 +92,16 @@ function createBoard() {
   });
 }
 
+function hideCards() {
+  const allCards = document.querySelectorAll('.card');
+  allCards.forEach(card => card.classList.remove('flipped'));
+  lockBoard = false;
+}
+
 function startGameTimer() {
   if (gameTimer) clearInterval(gameTimer);
   gameSeconds = 0;
-  gameTimerView.textContent = formatTime(gameSeconds);
+  gameTimerView.textContent = '00:00';
 
   gameTimer = setInterval(() => {
     gameSeconds++;
@@ -153,6 +160,7 @@ function checkMatch() {
     }
   } else {
     playSound(wrongSound);
+
     setTimeout(() => {
       firstCard.classList.remove('flipped');
       secondCard.classList.remove('flipped');
@@ -200,30 +208,53 @@ function startPreGameCountdown() {
 
   const interval = setInterval(() => {
     count--;
+
     if (count <= 0) {
       clearInterval(interval);
       preGameOverlay.classList.add('hidden');
       initGameplay();
       return;
     }
+
     preGameNumber.textContent = count;
   }, 1000);
 }
 
 function initGameplay() {
   createBoard();
+
   attempts = 0;
   matches = 0;
   gameSeconds = 0;
   firstCard = null;
   secondCard = null;
-  lockBoard = false;
+  lockBoard = true;
 
   attemptsElement.textContent = attempts;
-  gameTimerView.textContent = formatTime(gameSeconds);
+  gameTimerView.textContent = '10';
   victoryOverlay.classList.add('hidden');
 
-  startGameTimer();
+  if (previewTimer) clearInterval(previewTimer);
+  if (gameTimer) clearInterval(gameTimer);
+
+  const allCards = document.querySelectorAll('.card');
+  allCards.forEach(card => card.classList.add('flipped'));
+
+  let previewTime = 10;
+
+  previewTimer = setInterval(() => {
+    previewTime--;
+
+    if (previewTime <= 0) {
+      gameTimerView.textContent = '00:00';
+      clearInterval(previewTimer);
+      hideCards();
+      startGameTimer();
+      return;
+    }
+
+    gameTimerView.textContent = String(previewTime);
+  }, 1000);
 }
 
 function restartGame() {
@@ -310,10 +341,8 @@ async function createShareImage() {
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = white;
-  ctx.strokeStyle = 'rgba(0,0,0,0)';
 
-  // Limpa o texto placeholder do nome e escreve o nome real
+  ctx.fillStyle = white;
   drawRoundedRect(ctx, W * 0.154, H * 0.244, W * 0.692, H * 0.077, 28);
   ctx.fill();
 
@@ -322,10 +351,9 @@ async function createShareImage() {
   ctx.font = `bold ${nameFont}px Arial`;
   ctx.fillText(name, W * 0.5, H * 0.283);
 
-  // Limpa os blocos de tempo e tentativas para reescrever os valores
+  ctx.fillStyle = white;
   drawRoundedRect(ctx, W * 0.144, H * 0.366, W * 0.330, H * 0.136, 24);
   ctx.fill();
-
   drawRoundedRect(ctx, W * 0.529, H * 0.366, W * 0.330, H * 0.136, 24);
   ctx.fill();
 
