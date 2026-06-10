@@ -194,8 +194,7 @@
 
     .overlay-content button,
     .music-button,
-    .share-button,
-    .photo-button{
+    .share-button{
         border:none;
         cursor:pointer;
         border-radius:12px;
@@ -205,8 +204,7 @@
 
     .overlay-content button:hover,
     .music-button:hover,
-    .share-button:hover,
-    .photo-button:hover{
+    .share-button:hover{
         transform:translateY(-1px);
     }
 
@@ -246,7 +244,7 @@
 
     @keyframes logoPulse{
         0%{ transform:scale(1); opacity:1; }
-        50%{ transform:scale(1.05); opacity:.9; }
+        50%{ transform:scale(1.04); opacity:.95; }
         100%{ transform:scale(1); opacity:1; }
     }
 
@@ -344,12 +342,6 @@
         padding:14px 18px;
     }
 
-    .photo-button{
-        background:#c97f1a;
-        color:white;
-        padding:14px 18px;
-    }
-
     .restart-button{
         background:var(--accent);
         color:white;
@@ -384,13 +376,14 @@
         100%{ transform:rotateY(180deg) scale(1); }
     }
 
+    /* Ajuste responsivo de visualização móvel sem scroll */
     @media(max-width:800px){
         body{
             padding:6px;
         }
 
         .logo{
-            width:85px;
+            width:100px;
         }
 
         .top-info{
@@ -414,7 +407,7 @@
 
         .game-board{
             width:100%;
-            max-width:420px;
+            max-width:340px;
             display:grid;
             grid-template-columns:repeat(2, minmax(0, 1fr));
             grid-template-rows:repeat(4, minmax(0, 1fr));
@@ -448,15 +441,16 @@
 
     @media(max-width:420px){
         .overlay-content{
-            padding:28px 18px;
+            padding:24px 16px;
         }
 
         .overlay-content h1{
-            font-size:28px;
+            font-size:26px;
         }
 
         .victory-stats{
             grid-template-columns:1fr;
+            margin:10px 0;
         }
     }
 </style>
@@ -485,8 +479,8 @@
 
 <div class="top-info">
     <div class="info-box">
-        <div class="info-title">Tempo restante</div>
-        <div class="info-value" id="countdown">10</div>
+        <div class="info-title">Tempo de Jogo</div>
+        <div class="info-value" id="gameTimerView">00:00</div>
     </div>
 
     <div class="info-box">
@@ -500,14 +494,14 @@
 <div class="overlay hidden" id="victoryOverlay">
     <div class="overlay-content">
         <h1>Parabéns 🎉</h1>
-        <p>Você encontrou todos os pares!</p>
+        <p>Você encontrou todos os cores!</p>
 
         <input
             type="text"
             id="playerName"
             class="player-name-input"
-            placeholder="Digite seu nome"
-            maxlength="25"
+            placeholder="Digite seu nome para o ranking"
+            maxlength="20"
             autocomplete="name"
         >
 
@@ -530,14 +524,11 @@
         </div>
 
         <div class="victory-actions">
-            <button id="photoButton" class="photo-button">Adicionar foto de perfil</button>
             <button id="shareButton" class="share-button">Compartilhe essa conquista!</button>
             <button onclick="restartGame()" class="restart-button">Reiniciar jogo</button>
         </div>
     </div>
 </div>
-
-<input type="file" id="profilePhotoInput" accept="image/*" class="hidden">
 
 <canvas id="shareCanvas" width="1080" height="1920"></canvas>
 
