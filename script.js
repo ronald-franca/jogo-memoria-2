@@ -99,13 +99,22 @@ function hideCards() {
 }
 
 function startGameTimer() {
-  if (gameTimer) clearInterval(gameTimer);
+
+  if (gameTimer) {
+    clearInterval(gameTimer);
+  }
+
   gameSeconds = 0;
+
   gameTimerView.textContent = '00:00';
 
   gameTimer = setInterval(() => {
+
     gameSeconds++;
-    gameTimerView.textContent = formatTime(gameSeconds);
+
+    gameTimerView.textContent =
+      formatTime(gameSeconds);
+
   }, 1000);
 }
 
@@ -221,37 +230,60 @@ function startPreGameCountdown() {
 }
 
 function initGameplay() {
+
   createBoard();
 
   attempts = 0;
   matches = 0;
   gameSeconds = 0;
+
   firstCard = null;
   secondCard = null;
+
   lockBoard = true;
 
   attemptsElement.textContent = attempts;
-  gameTimerView.textContent = '10';
   victoryOverlay.classList.add('hidden');
 
   if (previewTimer) clearInterval(previewTimer);
   if (gameTimer) clearInterval(gameTimer);
 
   const allCards = document.querySelectorAll('.card');
-  allCards.forEach(card => card.classList.add('flipped'));
 
-  let previewTime = 10;
+  // força renderização antes de virar
+  setTimeout(() => {
 
-  previewTimer = setInterval(() => {
-    previewTime--;
+    allCards.forEach(card => {
+      card.classList.add('flipped');
+    });
 
-    if (previewTime <= 0) {
-      gameTimerView.textContent = '00:00';
-      clearInterval(previewTimer);
-      hideCards();
-      startGameTimer();
-      return;
-    }
+    let previewTime = 10;
+
+    gameTimerView.textContent = previewTime;
+
+    previewTimer = setInterval(() => {
+
+      previewTime--;
+
+      gameTimerView.textContent = previewTime;
+
+      if (previewTime <= 0) {
+
+        clearInterval(previewTimer);
+
+        allCards.forEach(card => {
+          card.classList.remove('flipped');
+        });
+
+        lockBoard = false;
+
+        startGameTimer();
+      }
+
+    }, 1000);
+
+  }, 100);
+}
 
     gameTimerView.textContent = String(previewTime);
   }, 1000);
