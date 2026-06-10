@@ -285,9 +285,7 @@ function initGameplay() {
   }, 100);
 }
 
-    gameTimerView.textContent = String(previewTime);
-  }, 1000);
-}
+
 
 function restartGame() {
   location.reload();
