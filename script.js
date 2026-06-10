@@ -265,16 +265,6 @@ function restartGame() {
   location.reload();
 }
 
-function drawRoundedRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
 function fitText(ctx, text, maxWidth, initialFontSize, fontFamily = 'Arial') {
   let size = initialFontSize;
   ctx.font = `bold ${size}px ${fontFamily}`;
@@ -341,34 +331,22 @@ async function createShareImage() {
   const H = canvas.height;
 
   const brown = '#6d3f07';
-  const white = '#ffffff';
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-
-  ctx.fillStyle = white;
-  drawRoundedRect(ctx, W * 0.154, H * 0.244, W * 0.692, H * 0.077, 28);
-  ctx.fill();
-
   ctx.fillStyle = brown;
-  const nameFont = fitText(ctx, name, W * 0.60, Math.round(H * 0.035), 'Arial');
+
+  const nameFont = fitText(ctx, name, W * 0.58, Math.round(H * 0.036), 'Arial');
   ctx.font = `bold ${nameFont}px Arial`;
-  ctx.fillText(name, W * 0.5, H * 0.283);
+  ctx.fillText(name, W * 0.5, H * 0.282);
 
-  ctx.fillStyle = white;
-  drawRoundedRect(ctx, W * 0.144, H * 0.366, W * 0.330, H * 0.136, 24);
-  ctx.fill();
-  drawRoundedRect(ctx, W * 0.529, H * 0.366, W * 0.330, H * 0.136, 24);
-  ctx.fill();
-
-  ctx.fillStyle = brown;
   ctx.font = `bold ${Math.round(H * 0.018)}px Arial`;
-  ctx.fillText('Tempo', W * 0.31, H * 0.398);
-  ctx.fillText('Tentativas', W * 0.69, H * 0.398);
+  ctx.fillText('Tempo', W * 0.307, H * 0.398);
+  ctx.fillText('Tentativas', W * 0.694, H * 0.398);
 
   ctx.font = `bold ${Math.round(H * 0.052)}px Arial`;
-  ctx.fillText(formatTime(gameSeconds), W * 0.31, H * 0.447);
-  ctx.fillText(String(attempts).padStart(2, '0'), W * 0.69, H * 0.447);
+  ctx.fillText(formatTime(gameSeconds), W * 0.307, H * 0.447);
+  ctx.fillText(String(attempts).padStart(2, '0'), W * 0.694, H * 0.447);
 }
 
 async function shareToStories() {
