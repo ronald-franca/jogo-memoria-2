@@ -1,58 +1,57 @@
 const board = document.getElementById('gameBoard');
-const timerElement = document.getElementById('timer');
+const countdownElement = document.getElementById('countdown');
 const attemptsElement = document.getElementById('attempts');
 
-const startOverlay = document.getElementById('startOverlay');
-const countdownOverlay = document.getElementById('countdownOverlay');
-const countdownElement = document.getElementById('countdown');
-const victoryScreen = document.getElementById('victoryScreen');
+const startScreen = document.getElementById('startScreen');
+const preGameOverlay = document.getElementById('preGameOverlay');
+const preGameNumber = document.getElementById('preGameNumber');
+const victoryOverlay = document.getElementById('victoryOverlay');
 
 const finalTime = document.getElementById('finalTime');
 const finalAttempts = document.getElementById('finalAttempts');
 const rankBadge = document.getElementById('rankBadge');
 const rankMessage = document.getElementById('rankMessage');
 
-const startBtn = document.getElementById('startBtn');
+const startButton = document.getElementById('startButton');
 const shareButton = document.getElementById('shareButton');
 const photoButton = document.getElementById('photoButton');
-const profileInput = document.getElementById('profileInput');
+const profilePhotoInput = document.getElementById('profilePhotoInput');
+const playerNameInput = document.getElementById('playerName');
+const musicButton = document.getElementById('musicButton');
 
 const flipSound = document.getElementById('flipSound');
 const matchSound = document.getElementById('matchSound');
+const wrongSound = document.getElementById('wrongSound');
 const victorySound = document.getElementById('victorySound');
+const bgMusic = document.getElementById('bgMusic');
 
 const shareCanvas = document.getElementById('shareCanvas');
 const shareCtx = shareCanvas.getContext('2d');
 
-const cardsData = [
-  'assets/milho.jpg',
-  'assets/galinha.jpg',
-  'assets/vaca.jpg',
-  'assets/fava.jpg'
+const cardImages = [
+  'assets/par1.jpg',
+  'assets/par2.jpg',
+  'assets/par3.jpg',
+  'assets/par4.jpg'
 ];
 
-let gameCards = [...cardsData, ...cardsData];
-
+let cards = [...cardImages, ...cardImages];
 let firstCard = null;
 let secondCard = null;
-let lockBoard = false;
+let lockBoard = true;
 
 let attempts = 0;
 let matches = 0;
 
-let seconds = 0;
-let timer;
-let currentRank = {
-  label: 'BRONZE',
-  className: 'bronze',
-  medalNumber: '3',
-  message: ''
-};
-
-let profileImageBase64 = null;
+let previewCountdown = 10;
+let previewTimer = null;
+let gameTimer = null;
+let gameSeconds = 0;
+let musicMuted = false;
+let profilePhotoDataUrl = null;
 
 function shuffle(array) {
-  return array.sort(() => Math.random() - 0.5);
+  array.sort(() => Math.random() - 0.5);
 }
 
 function formatTime(totalSeconds) {
@@ -73,10 +72,10 @@ function playSound(audio) {
 }
 
 function createBoard() {
-  shuffle(gameCards);
   board.innerHTML = '';
+  shuffle(cards);
 
-  gameCards.forEach(image => {
+  cards.forEach(image => {
     const card = document.createElement('div');
     card.classList.add('card');
     card.dataset.image = image;
@@ -92,30 +91,24 @@ function createBoard() {
       </div>
     `;
 
+    card.classList.add('flipped');
+    card.addEventListener('click', flipCard);
     board.appendChild(card);
   });
-
-  const allCards = document.querySelectorAll('.card');
-
-  allCards.forEach(card => {
-    card.classList.add('flipped');
-  });
-
-  setTimeout(() => {
-    allCards.forEach(card => {
-      card.classList.remove('flipped');
-      card.addEventListener('click', flipCard);
-    });
-
-    startTimer();
-  }, 10000);
 }
 
-function startTimer() {
-  timer = setInterval(() => {
-    seconds++;
+function hideCards() {
+  const allCards = document.querySelectorAll('.card');
+  allCards.forEach(card => card.classList.remove('flipped'));
+  lockBoard = false;
+}
 
-    timerElement.textContent = formatTime(seconds);
+function startGameTimer() {
+  if (gameTimer) clearInterval(gameTimer);
+  gameSeconds = 0;
+
+  gameTimer = setInterval(() => {
+    gameSeconds++;
   }, 1000);
 }
 
@@ -152,41 +145,54 @@ function checkMatch() {
     secondCard.classList.add('matched');
 
     matches++;
-    resetBoard();
+    resetCards();
 
-    if (matches === cardsData.length) {
-      finishGame();
+    if (matches === cardImages.length) {
+      if (gameTimer) clearInterval(gameTimer);
+      playSound(victorySound);
+
+      const rank = getRank(attempts, gameSeconds);
+
+      finalTime.textContent = formatTime(gameSeconds);
+      finalAttempts.textContent = attempts;
+      rankBadge.textContent = rank.label;
+      rankBadge.className = `rank-badge ${rank.className}`;
+      rankMessage.textContent = rank.message;
+
+      setTimeout(() => {
+        victoryOverlay.classList.remove('hidden');
+      }, 450);
     }
   } else {
+    playSound(wrongSound);
+
     setTimeout(() => {
       firstCard.classList.remove('flipped');
       secondCard.classList.remove('flipped');
-      resetBoard();
+      resetCards();
     }, 1000);
   }
 }
 
-function resetBoard() {
+function resetCards() {
   firstCard = null;
   secondCard = null;
   lockBoard = false;
 }
 
 function getRank(attemptsValue, timeValue) {
-  const score = attemptsValue + Math.ceil(timeValue / 10);
-
-  if (score <= 7) {
+  if (timeValue <= 60 && attemptsValue <= 8) {
     return {
-      label: 'Ouro',
+      label: 'OURO',
       className: 'gold',
       medalNumber: '1',
       message: 'Excelente memória! Você encontrou os pares com muito controle.'
     };
   }
 
-  if (score <= 11) {
+  if (timeValue <= 90 && attemptsValue <= 11) {
     return {
-      label: 'Prata',
+      label: 'PRATA',
       className: 'silver',
       medalNumber: '2',
       message: 'Muito bem! Você teve uma boa estratégia durante o jogo.'
@@ -194,47 +200,69 @@ function getRank(attemptsValue, timeValue) {
   }
 
   return {
-    label: 'Bronze',
+    label: 'BRONZE',
     className: 'bronze',
     medalNumber: '3',
     message: 'Você conseguiu! Com mais treino, seu resultado pode ficar ainda melhor.'
   };
 }
 
-function finishGame() {
-  clearInterval(timer);
-
-  currentRank = getRank(attempts, seconds);
-
-  finalTime.textContent = formatTime(seconds);
-  finalAttempts.textContent = attempts;
-  rankBadge.textContent = currentRank.label;
-  rankBadge.className = `rank-badge ${currentRank.className}`;
-  rankMessage.textContent = currentRank.message;
-
-  playSound(victorySound);
-
-  setTimeout(() => {
-    victoryScreen.classList.remove('hidden');
-  }, 500);
-}
-
-function startCountdown() {
-  startOverlay.classList.add('hidden');
-  countdownOverlay.classList.remove('hidden');
+function startPreGameCountdown() {
+  startScreen.classList.add('hidden');
+  preGameOverlay.classList.remove('hidden');
 
   let count = 3;
-  countdownElement.textContent = count;
+  preGameNumber.textContent = count;
 
   const interval = setInterval(() => {
     count--;
-    countdownElement.textContent = count;
 
-    if (count === 0) {
+    if (count <= 0) {
       clearInterval(interval);
-      countdownOverlay.classList.add('hidden');
-      createBoard();
+      preGameOverlay.classList.add('hidden');
+      startCountdown();
+      return;
     }
+
+    preGameNumber.textContent = count;
+  }, 1000);
+}
+
+function startCountdown() {
+  createBoard();
+
+  previewCountdown = 10;
+  attempts = 0;
+  matches = 0;
+  gameSeconds = 0;
+  firstCard = null;
+  secondCard = null;
+  lockBoard = true;
+
+  attemptsElement.textContent = attempts;
+  countdownElement.textContent = previewCountdown;
+  victoryOverlay.classList.add('hidden');
+
+  if (previewTimer) clearInterval(previewTimer);
+  if (gameTimer) clearInterval(gameTimer);
+
+  const allCards = document.querySelectorAll('.card');
+  allCards.forEach(card => card.classList.add('flipped'));
+
+  previewTimer = setInterval(() => {
+    previewCountdown--;
+
+    if (previewCountdown <= 0) {
+      previewCountdown = 0;
+      countdownElement.textContent = previewCountdown;
+
+      clearInterval(previewTimer);
+      hideCards();
+      startGameTimer();
+      return;
+    }
+
+    countdownElement.textContent = previewCountdown;
   }, 1000);
 }
 
@@ -242,14 +270,20 @@ function restartGame() {
   location.reload();
 }
 
-function drawRoundedRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+function drawImageCover(ctx, img, x, y, w, h) {
+  const imgRatio = img.width / img.height;
+  const boxRatio = w / h;
+  let sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+  if (imgRatio > boxRatio) {
+    sw = img.height * boxRatio;
+    sx = (img.width - sw) / 2;
+  } else {
+    sh = img.width / boxRatio;
+    sy = (img.height - sh) / 2;
+  }
+
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
 function loadImage(src) {
@@ -281,112 +315,66 @@ function canvasToBlob(canvas) {
   });
 }
 
-function drawImageCover(ctx, img, x, y, w, h) {
-  const imgRatio = img.width / img.height;
-  const boxRatio = w / h;
-  let sx = 0, sy = 0, sw = img.width, sh = img.height;
-
-  if (imgRatio > boxRatio) {
-    sw = img.height * boxRatio;
-    sx = (img.width - sw) / 2;
-  } else {
-    sh = img.width / boxRatio;
-    sy = (img.height - sh) / 2;
-  }
-
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-}
-
 async function createShareImage() {
-  const rank = currentRank && currentRank.className ? currentRank : getRank(attempts, seconds);
-  const templatePath = rank.className === 'gold'
-    ? 'assets/story-ouro.png'
-    : rank.className === 'silver'
-      ? 'assets/story-prata.png'
-      : 'assets/story-bronze.png';
+  const rank = getRank(attempts, gameSeconds);
 
+  const templateMap = {
+    gold: 'assets/story-ouro.png',
+    silver: 'assets/story-prata.png',
+    bronze: 'assets/story-bronze.png'
+  };
+
+  // Se quiser usar URL, substitua os caminhos acima por links completos.
+  const templateSrc = templateMap[rank.className] || templateMap.gold;
+
+  const canvas = shareCanvas;
   const ctx = shareCtx;
-  const w = shareCanvas.width;
-  const h = shareCanvas.height;
 
-  ctx.clearRect(0, 0, w, h);
+  canvas.width = 1080;
+  canvas.height = 1920;
 
-  try {
-    const template = await loadImage(templatePath);
-    ctx.drawImage(template, 0, 0, w, h);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Atualiza apenas os valores que mudam no layout pronto
-    ctx.fillStyle = '#ffffff';
-    drawRoundedRect(ctx, 228, 417, 200, 56, 18);
-    ctx.fill();
+  const template = await loadImage(templateSrc);
+  ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
 
-    drawRoundedRect(ctx, 618, 417, 200, 56, 18);
-    ctx.fill();
+  const playerName = (playerNameInput?.value || '').trim() || 'Jogador';
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#c47e16';
-    ctx.font = 'bold 42px Arial';
+  ctx.fillStyle = '#c47e16';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-    ctx.fillText(formatTime(seconds), 328, 446);
-    ctx.fillText(String(attempts).padStart(2, '0'), 718, 446);
+  ctx.font = 'bold 46px Arial';
+  ctx.fillText(playerName, 540, 620);
 
-    // Foto opcional do jogador na moldura circular
-    if (profileImageBase64) {
-      const userImg = await loadImage(profileImageBase64);
+  ctx.font = 'bold 52px Arial';
+  ctx.fillText(formatTime(gameSeconds), 310, 835);
+  ctx.fillText(String(attempts).padStart(2, '0'), 770, 835);
 
-      const circleX = 86;
-      const circleY = 790;
-      const circleSize = 390;
+  if (profilePhotoDataUrl) {
+    try {
+      const userImg = await loadImage(profilePhotoDataUrl);
+
+      const centerX = 305;
+      const centerY = 1460;
+      const radius = 225;
 
       ctx.save();
       ctx.beginPath();
-      ctx.arc(
-        circleX + circleSize / 2,
-        circleY + circleSize / 2,
-        circleSize / 2,
-        0,
-        Math.PI * 2
-      );
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.closePath();
       ctx.clip();
 
-      drawImageCover(ctx, userImg, circleX, circleY, circleSize, circleSize);
+      drawImageCover(ctx, userImg, centerX - radius, centerY - radius, radius * 2, radius * 2);
 
       ctx.restore();
 
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 12;
       ctx.beginPath();
-      ctx.arc(
-        circleX + circleSize / 2,
-        circleY + circleSize / 2,
-        circleSize / 2,
-        0,
-        Math.PI * 2
-      );
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
       ctx.stroke();
-    }
-
-  } catch (e) {
-    // fallback simples, caso o template não carregue
-    ctx.fillStyle = '#f3dfb4';
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.fillStyle = '#ffffff';
-    drawRoundedRect(ctx, 120, 120, 840, 160, 50);
-    ctx.fill();
-
-    ctx.fillStyle = '#c47e16';
-    ctx.font = 'bold 64px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Jogo da Memória', w / 2, 200);
-
-    ctx.font = 'bold 42px Arial';
-    ctx.fillText(`Tempo: ${formatTime(seconds)}`, w / 2, 420);
-    ctx.fillText(`Tentativas: ${attempts}`, w / 2, 490);
-
-    ctx.fillText(`Ranking: ${rank.label}`, w / 2, 580);
+    } catch (e) {}
   }
 }
 
@@ -410,13 +398,11 @@ async function shareToStories() {
       try {
         await navigator.share({
           files: [file],
-          title: 'Meu resultado no jogo da memória',
-          text: 'Completei o jogo da biodiversidade crioula!'
+          title: 'Jogo da Memória',
+          text: 'Veja meu resultado no Jogo da Memória da Biodiversidade Crioula!'
         });
         return;
-      } catch (e) {
-        // Se o usuário cancelar, cai no download
-      }
+      } catch (e) {}
     }
 
     const url = URL.createObjectURL(blob);
@@ -427,26 +413,45 @@ async function shareToStories() {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+    alert('A imagem foi baixada. No celular, abra a imagem e compartilhe nos stories.');
   } catch (error) {
     alert('Não foi possível gerar a imagem para compartilhar.');
   }
 }
 
-photoButton.addEventListener('click', () => {
-  profileInput.click();
+startButton.addEventListener('click', () => {
+  bgMusic.volume = 0.25;
+  bgMusic.play().catch(() => {});
+  startPreGameCountdown();
 });
 
-profileInput.addEventListener('change', () => {
-  const file = profileInput.files && profileInput.files[0];
+musicButton.addEventListener('click', () => {
+  if (!musicMuted) {
+    bgMusic.pause();
+    musicButton.textContent = '🔇 Música';
+    musicMuted = true;
+  } else {
+    bgMusic.play().catch(() => {});
+    musicButton.textContent = '🔊 Música';
+    musicMuted = false;
+  }
+});
+
+photoButton.addEventListener('click', () => {
+  profilePhotoInput.click();
+});
+
+profilePhotoInput.addEventListener('change', () => {
+  const file = profilePhotoInput.files && profilePhotoInput.files[0];
   if (!file) return;
 
   const reader = new FileReader();
   reader.onload = () => {
-    profileImageBase64 = reader.result;
+    profilePhotoDataUrl = reader.result;
     photoButton.textContent = 'Foto adicionada ✓';
   };
   reader.readAsDataURL(file);
 });
 
-startBtn.addEventListener('click', startCountdown);
 shareButton.addEventListener('click', shareToStories);
