@@ -319,12 +319,11 @@ async function createShareImage() {
   const rank = getRank(attempts, gameSeconds);
 
   const templateMap = {
-    gold: 'assets/story-ouro.png',
-    silver: 'assets/story-prata.png',
-    bronze: 'assets/story-bronze.png'
+    gold: 'assets/3.png',
+    silver: 'assets/4.png',
+    bronze: 'assets/5.png'
   };
 
-  // Se quiser usar URL, substitua os caminhos acima por links completos.
   const templateSrc = templateMap[rank.className] || templateMap.gold;
 
   const canvas = shareCanvas;
@@ -365,7 +364,14 @@ async function createShareImage() {
       ctx.closePath();
       ctx.clip();
 
-      drawImageCover(ctx, userImg, centerX - radius, centerY - radius, radius * 2, radius * 2);
+      drawImageCover(
+        ctx,
+        userImg,
+        centerX - radius,
+        centerY - radius,
+        radius * 2,
+        radius * 2
+      );
 
       ctx.restore();
 
