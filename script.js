@@ -1,5 +1,5 @@
 const board = document.getElementById('gameBoard');
-const countdownElement = document.getElementById('countdown');
+const gameTimerView = document.getElementById('gameTimerView');
 const attemptsElement = document.getElementById('attempts');
 
 const startScreen = document.getElementById('startScreen');
@@ -14,8 +14,6 @@ const rankMessage = document.getElementById('rankMessage');
 
 const startButton = document.getElementById('startButton');
 const shareButton = document.getElementById('shareButton');
-const photoButton = document.getElementById('photoButton');
-const profilePhotoInput = document.getElementById('profilePhotoInput');
 const playerNameInput = document.getElementById('playerName');
 const musicButton = document.getElementById('musicButton');
 
@@ -43,12 +41,9 @@ let lockBoard = true;
 let attempts = 0;
 let matches = 0;
 
-let previewCountdown = 10;
-let previewTimer = null;
 let gameTimer = null;
 let gameSeconds = 0;
 let musicMuted = false;
-let profilePhotoDataUrl = null;
 
 function shuffle(array) {
   array.sort(() => Math.random() - 0.5);
@@ -91,24 +86,19 @@ function createBoard() {
       </div>
     `;
 
-    card.classList.add('flipped');
     card.addEventListener('click', flipCard);
     board.appendChild(card);
   });
 }
 
-function hideCards() {
-  const allCards = document.querySelectorAll('.card');
-  allCards.forEach(card => card.classList.remove('flipped'));
-  lockBoard = false;
-}
-
 function startGameTimer() {
   if (gameTimer) clearInterval(gameTimer);
   gameSeconds = 0;
+  gameTimerView.textContent = formatTime(gameSeconds);
 
   gameTimer = setInterval(() => {
     gameSeconds++;
+    gameTimerView.textContent = formatTime(gameSeconds);
   }, 1000);
 }
 
@@ -118,7 +108,6 @@ function flipCard() {
   if (this.classList.contains('matched')) return;
 
   playSound(flipSound);
-
   this.classList.add('flipped');
 
   if (!firstCard) {
@@ -140,7 +129,6 @@ function checkMatch() {
 
   if (isMatch) {
     playSound(matchSound);
-
     firstCard.classList.add('matched');
     secondCard.classList.add('matched');
 
@@ -165,7 +153,6 @@ function checkMatch() {
     }
   } else {
     playSound(wrongSound);
-
     setTimeout(() => {
       firstCard.classList.remove('flipped');
       secondCard.classList.remove('flipped');
@@ -181,28 +168,23 @@ function resetCards() {
 }
 
 function getRank(attemptsValue, timeValue) {
-  if (timeValue <= 60 && attemptsValue <= 8) {
+  if (timeValue <= 30 && attemptsValue <= 6) {
     return {
       label: 'OURO',
       className: 'gold',
-      medalNumber: '1',
       message: 'Excelente memória! Você encontrou os pares com muito controle.'
     };
   }
-
-  if (timeValue <= 90 && attemptsValue <= 11) {
+  if (timeValue <= 60 && attemptsValue <= 10) {
     return {
       label: 'PRATA',
       className: 'silver',
-      medalNumber: '2',
       message: 'Muito bem! Você teve uma boa estratégia durante o jogo.'
     };
   }
-
   return {
     label: 'BRONZE',
     className: 'bronze',
-    medalNumber: '3',
     message: 'Você conseguiu! Com mais treino, seu resultado pode ficar ainda melhor.'
   };
 }
@@ -216,82 +198,39 @@ function startPreGameCountdown() {
 
   const interval = setInterval(() => {
     count--;
-
     if (count <= 0) {
       clearInterval(interval);
       preGameOverlay.classList.add('hidden');
-      startCountdown();
+      initGameplay();
       return;
     }
-
     preGameNumber.textContent = count;
   }, 1000);
 }
 
-function startCountdown() {
+function initGameplay() {
   createBoard();
-
-  previewCountdown = 10;
   attempts = 0;
   matches = 0;
   gameSeconds = 0;
   firstCard = null;
   secondCard = null;
-  lockBoard = true;
+  lockBoard = false; // Cartas começam viradas para baixo prontas para o jogo direto
 
   attemptsElement.textContent = attempts;
-  countdownElement.textContent = previewCountdown;
   victoryOverlay.classList.add('hidden');
 
-  if (previewTimer) clearInterval(previewTimer);
-  if (gameTimer) clearInterval(gameTimer);
-
-  const allCards = document.querySelectorAll('.card');
-  allCards.forEach(card => card.classList.add('flipped'));
-
-  previewTimer = setInterval(() => {
-    previewCountdown--;
-
-    if (previewCountdown <= 0) {
-      previewCountdown = 0;
-      countdownElement.textContent = previewCountdown;
-
-      clearInterval(previewTimer);
-      hideCards();
-      startGameTimer();
-      return;
-    }
-
-    countdownElement.textContent = previewCountdown;
-  }, 1000);
+  startGameTimer();
 }
 
 function restartGame() {
   location.reload();
 }
 
-function drawImageCover(ctx, img, x, y, w, h) {
-  const imgRatio = img.width / img.height;
-  const boxRatio = w / h;
-  let sx = 0, sy = 0, sw = img.width, sh = img.height;
-
-  if (imgRatio > boxRatio) {
-    sw = img.height * boxRatio;
-    sx = (img.width - sw) / 2;
-  } else {
-    sh = img.width / boxRatio;
-    sy = (img.height - sh) / 2;
-  }
-
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-}
-
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    if (!src.startsWith('data:')) {
-      img.crossOrigin = 'anonymous';
-    }
+    img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src.startsWith('data:') ? src : `${src}?v=${Date.now()}`;
@@ -318,6 +257,7 @@ function canvasToBlob(canvas) {
 async function createShareImage() {
   const rank = getRank(attempts, gameSeconds);
 
+  // Mapeamento dos templates limpos gerados (sem textos dinâmicos por baixo)
   const templateMap = {
     gold: 'assets/3.png',
     silver: 'assets/4.png',
@@ -325,12 +265,8 @@ async function createShareImage() {
   };
 
   const templateSrc = templateMap[rank.className] || templateMap.gold;
-
   const canvas = shareCanvas;
   const ctx = shareCtx;
-
-  canvas.width = 1080;
-  canvas.height = 1920;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -339,49 +275,19 @@ async function createShareImage() {
 
   const playerName = (playerNameInput?.value || '').trim() || 'Jogador';
 
-  ctx.fillStyle = '#c47e16';
+  // Configuração estilizada do texto para casar com a identidade marrom/terrosa do app
+  ctx.fillStyle = '#be7612'; 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  ctx.font = 'bold 46px Arial';
-  ctx.fillText(playerName, 540, 620);
+  // 1. Escreve o Nome do Jogador no meio da primeira caixinha branca
+  ctx.font = 'bold 54px Arial';
+  ctx.fillText(playerName, 540, 642);
 
-  ctx.font = 'bold 52px Arial';
-  ctx.fillText(formatTime(gameSeconds), 310, 835);
-  ctx.fillText(String(attempts).padStart(2, '0'), 770, 835);
-
-  if (profilePhotoDataUrl) {
-    try {
-      const userImg = await loadImage(profilePhotoDataUrl);
-
-      const centerX = 305;
-      const centerY = 1460;
-      const radius = 225;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-
-      drawImageCover(
-        ctx,
-        userImg,
-        centerX - radius,
-        centerY - radius,
-        radius * 2,
-        radius * 2
-      );
-
-      ctx.restore();
-
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 12;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.stroke();
-    } catch (e) {}
-  }
+  // 2. Escreve o Tempo e as Tentativas lado a lado nas caixinhas do meio
+  ctx.font = 'bold 56px Arial';
+  ctx.fillText(formatTime(gameSeconds), 340, 856);
+  ctx.fillText(String(attempts).padStart(2, '0'), 740, 856);
 }
 
 async function shareToStories() {
@@ -391,7 +297,7 @@ async function shareToStories() {
     const blob = await canvasToBlob(shareCanvas);
     if (!blob) throw new Error('Falha ao gerar imagem.');
 
-    const file = new File([blob], 'resultado-jogo-memoria.png', { type: 'image/png' });
+    const file = new File([blob], 'conquista-raizes-crioulas.png', { type: 'image/png' });
 
     const canShareFiles =
       typeof navigator.share === 'function' &&
@@ -405,7 +311,7 @@ async function shareToStories() {
         await navigator.share({
           files: [file],
           title: 'Jogo da Memória',
-          text: 'Veja meu resultado no Jogo da Memória da Biodiversidade Crioula!'
+          text: 'Olha a minha conquista no Jogo da Memória - Raízes da Biodiversidade Crioula do Piauí!'
         });
         return;
       } catch (e) {}
@@ -414,15 +320,15 @@ async function shareToStories() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'resultado-jogo-memoria.png';
+    a.download = 'conquista-raizes-crioulas.png';
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
 
-    alert('A imagem foi baixada. No celular, abra a imagem e compartilhe nos stories.');
+    alert('Imagem baixada! Agora você pode postá-la diretamente nos seus Stories.');
   } catch (error) {
-    alert('Não foi possível gerar a imagem para compartilhar.');
+    alert('Erro ao gerar imagem de compartilhamento.');
   }
 }
 
@@ -442,22 +348,6 @@ musicButton.addEventListener('click', () => {
     musicButton.textContent = '🔊 Música';
     musicMuted = false;
   }
-});
-
-photoButton.addEventListener('click', () => {
-  profilePhotoInput.click();
-});
-
-profilePhotoInput.addEventListener('change', () => {
-  const file = profilePhotoInput.files && profilePhotoInput.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    profilePhotoDataUrl = reader.result;
-    photoButton.textContent = 'Foto adicionada ✓';
-  };
-  reader.readAsDataURL(file);
 });
 
 shareButton.addEventListener('click', shareToStories);
