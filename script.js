@@ -308,9 +308,9 @@ async function createShareImage() {
   const rank = getRank(attempts, gameSeconds);
 
   const templateMap = {
-    gold: 'assets/3.png',
-    silver: 'assets/4.png',
-    bronze: 'assets/5.png'
+    gold: 'assets/6.png',
+    silver: 'assets/7.png',
+    bronze: 'assets/8.png'
   };
 
   const templateSrc = templateMap[rank.className] || templateMap.gold;
@@ -322,6 +322,9 @@ async function createShareImage() {
   canvas.width = template.width;
   canvas.height = template.height;
 
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
 
@@ -329,7 +332,6 @@ async function createShareImage() {
 
   const W = canvas.width;
   const H = canvas.height;
-
   const brown = '#6d3f07';
 
   ctx.textAlign = 'center';
