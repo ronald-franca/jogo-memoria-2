@@ -328,27 +328,66 @@ async function createShareImage() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
 
-  const name = (playerNameInput && playerNameInput.value ? playerNameInput.value : '').trim() || 'Jogador';
+  const name =
+    (playerNameInput && playerNameInput.value
+      ? playerNameInput.value
+      : '').trim() || 'Jogador';
 
   const W = canvas.width;
   const H = canvas.height;
+
   const brown = '#6d3f07';
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = brown;
 
-  const nameFont = fitText(ctx, name, W * 0.58, Math.round(H * 0.03), 'Arial');
+  // NOME
+  const nameFont = fitText(
+    ctx,
+    name,
+    W * 0.55,
+    Math.round(H * 0.030),
+    'Arial'
+  );
+
   ctx.font = `bold ${nameFont}px Arial`;
-  ctx.fillText(name, W * 0.5, H * 0.286);
 
+  ctx.fillText(
+    name,
+    W * 0.50,
+    H * 0.279
+  );
+
+  // TÍTULOS
   ctx.font = `bold ${Math.round(H * 0.016)}px Arial`;
-  ctx.fillText('Tempo', W * 0.307, H * 0.392);
-  ctx.fillText('Tentativas', W * 0.694, H * 0.392);
 
-  ctx.font = `bold ${Math.round(H * 0.046)}px Arial`;
-  ctx.fillText(formatTime(gameSeconds), W * 0.307, H * 0.449);
-  ctx.fillText(String(attempts).padStart(2, '0'), W * 0.694, H * 0.449);
+  ctx.fillText(
+    'Tempo',
+    W * 0.307,
+    H * 0.395
+  );
+
+  ctx.fillText(
+    'Tentativas',
+    W * 0.694,
+    H * 0.395
+  );
+
+  // VALORES
+  ctx.font = `bold ${Math.round(H * 0.045)}px Arial`;
+
+  ctx.fillText(
+    formatTime(gameSeconds),
+    W * 0.304,
+    H * 0.452
+  );
+
+  ctx.fillText(
+    String(attempts).padStart(2, '0'),
+    W * 0.691,
+    H * 0.452
+  );
 }
 
 async function shareToStories() {
