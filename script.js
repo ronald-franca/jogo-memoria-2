@@ -308,86 +308,57 @@ async function createShareImage() {
   const rank = getRank(attempts, gameSeconds);
 
   const templateMap = {
-    gold: 'assets/6.png',
-    silver: 'assets/7.png',
-    bronze: 'assets/8.png'
+    gold: 'assets/3.png',
+    silver: 'assets/4.png',
+    bronze: 'assets/5.png'
   };
 
   const templateSrc = templateMap[rank.className] || templateMap.gold;
-  const template = await loadImage(templateSrc);
-
   const canvas = shareCanvas;
   const ctx = shareCtx;
 
-  canvas.width = template.width;
-  canvas.height = template.height;
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const template = await loadImage(templateSrc);
   ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
 
-  const name =
-    (playerNameInput && playerNameInput.value
-      ? playerNameInput.value
-      : '').trim() || 'Jogador';
+  const playerName = (playerNameInput?.value || '').trim() || 'Jogador';
 
-  const W = canvas.width;
-  const H = canvas.height;
-
-  const brown = '#6d3f07';
-
+  // Configuração base do texto
+  ctx.fillStyle = '#be7612'; 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = brown;
 
-  // NOME
-  const nameFont = fitText(
-    ctx,
-    name,
-    W * 0.55,
-    Math.round(H * 0.030),
-    'Arial'
-  );
+  // 1. CORREÇÃO DO NOME: Ajustado para o centro vertical da caixa (Y: 645)
+  ctx.font = 'bold 50px Arial';
+  ctx.fillText(playerName, 540, 645);
 
-  ctx.font = `bold ${nameFont}px Arial`;
+  // 2. CORREÇÃO DO TEMPO E TENTATIVAS: Centralizados no eixo X de cada caixa (X: 310 e X: 770)
+  ctx.font = 'bold 54px Arial';
+  ctx.fillText(formatTime(gameSeconds), 310, 856); // Caixa esquerda
+  ctx.fillText(String(attempts).padStart(2, '0'), 770, 856); // Caixa direita
 
-  ctx.fillText(
-    name,
-    W * 0.50,
-    H * 0.279
-  );
+  // 3. AJUSTE DO TEXTO DO RANKING (OURO/PRATA/BRONZE)
+  ctx.font = 'bold 44px Arial';
+  ctx.fillText(rank.label, 540, 1100);
 
-  // TÍTULOS
-  ctx.font = `bold ${Math.round(H * 0.016)}px Arial`;
-
-  ctx.fillText(
-    'Tempo',
-    W * 0.307,
-    H * 0.395
-  );
-
-  ctx.fillText(
-    'Tentativas',
-    W * 0.694,
-    H * 0.395
-  );
-
-  // VALORES
-  ctx.font = `bold ${Math.round(H * 0.045)}px Arial`;
-
-  ctx.fillText(
-    formatTime(gameSeconds),
-    W * 0.304,
-    H * 0.452
-  );
-
-  ctx.fillText(
-    String(attempts).padStart(2, '0'),
-    W * 0.691,
-    H * 0.452
-  );
+  // 4. CORREÇÃO DA QUEBRA DE LINHA DO TEXTO DE FEEDBACK
+  ctx.font = '32px Arial';
+  ctx.fillStyle = '#555555'; // Tom mais suave para a mensagem
+  
+  // Função interna simples para desenhar texto em duas linhas se for muito grande
+  const message = rank.message;
+  if (message.length > 40) {
+    // Divide a frase aproximadamente a meio para não cortar as palavras
+    const meio = message.lastIndexOf(' ', 40);
+    const linha1 = message.substring(0, meio);
+    const linha2 = message.substring(meio + 1);
+    
+    ctx.fillText(linha1, 540, 1180);
+    ctx.fillText(linha2, 540, 1230);
+  } else {
+    ctx.fillText(message, 540, 1200);
+  }
 }
 
 async function shareToStories() {
