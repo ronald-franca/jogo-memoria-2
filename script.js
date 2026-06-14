@@ -265,6 +265,16 @@ function restartGame() {
   location.reload();
 }
 
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
 function fitText(ctx, text, maxWidth, initialFontSize, fontFamily = 'Arial') {
   let size = initialFontSize;
   ctx.font = `bold ${size}px ${fontFamily}`;
@@ -334,20 +344,28 @@ async function createShareImage() {
   const H = canvas.height;
   const brown = '#6d3f07';
 
+  ctx.fillStyle = '#ffffff';
+
+  // Limpa o texto de placeholder do nome sem mexer nas bordas do template
+  drawRoundedRect(ctx, W * 0.19, H * 0.255, W * 0.62, H * 0.055, Math.round(H * 0.014));
+  ctx.fill();
+
+  // Limpa a área dos números, preservando os títulos do template
+  drawRoundedRect(ctx, W * 0.195, H * 0.405, W * 0.19, H * 0.06, Math.round(H * 0.014));
+  ctx.fill();
+  drawRoundedRect(ctx, W * 0.595, H * 0.405, W * 0.19, H * 0.06, Math.round(H * 0.014));
+  ctx.fill();
+
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = brown;
 
-  const nameFont = fitText(ctx, name, W * 0.58, Math.round(H * 0.036), 'Arial');
+  const nameFont = fitText(ctx, name, W * 0.58, Math.round(H * 0.03), 'Arial');
   ctx.font = `bold ${nameFont}px Arial`;
   ctx.fillText(name, W * 0.5, H * 0.282);
 
-  ctx.font = `bold ${Math.round(H * 0.018)}px Arial`;
-  ctx.fillText('Tempo', W * 0.307, H * 0.398);
-  ctx.fillText('Tentativas', W * 0.694, H * 0.398);
-
-  ctx.font = `bold ${Math.round(H * 0.052)}px Arial`;
-  ctx.fillText(formatTime(gameSeconds), W * 0.307, H * 0.447);
+  ctx.font = `bold ${Math.round(H * 0.05)}px Arial`;
+  ctx.fillText(formatTime(gameSeconds), W * 0.290, H * 0.447);
   ctx.fillText(String(attempts).padStart(2, '0'), W * 0.694, H * 0.447);
 }
 
