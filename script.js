@@ -1,5 +1,5 @@
 const board = document.getElementById('gameBoard');
-const gameTimerView = document.getElementById('gameTimerView');
+const gameTimerView = document.getElementById('gameTimerView') || document.getElementById('countdown');
 const attemptsElement = document.getElementById('attempts');
 
 const startScreen = document.getElementById('startScreen');
@@ -92,23 +92,21 @@ function createBoard() {
   });
 }
 
-function hideCards() {
-  const allCards = document.querySelectorAll('.card');
-  allCards.forEach(card => card.classList.remove('flipped'));
-  lockBoard = false;
-}
-
 function startGameTimer() {
   if (gameTimer) {
     clearInterval(gameTimer);
   }
 
   gameSeconds = 0;
-  gameTimerView.textContent = '00:00';
+  if (gameTimerView) {
+    gameTimerView.textContent = '00:00';
+  }
 
   gameTimer = setInterval(() => {
     gameSeconds++;
-    gameTimerView.textContent = formatTime(gameSeconds);
+    if (gameTimerView) {
+      gameTimerView.textContent = formatTime(gameSeconds);
+    }
   }, 1000);
 }
 
@@ -129,7 +127,7 @@ function flipCard() {
   lockBoard = true;
 
   attempts++;
-  attemptsElement.textContent = attempts;
+  if (attemptsElement) attemptsElement.textContent = attempts;
 
   checkMatch();
 }
@@ -151,14 +149,16 @@ function checkMatch() {
 
       const rank = getRank(attempts, gameSeconds);
 
-      finalTime.textContent = formatTime(gameSeconds);
-      finalAttempts.textContent = attempts;
-      rankBadge.textContent = rank.label;
-      rankBadge.className = `rank-badge ${rank.className}`;
-      rankMessage.textContent = rank.message;
+      if (finalTime) finalTime.textContent = formatTime(gameSeconds);
+      if (finalAttempts) finalAttempts.textContent = attempts;
+      if (rankBadge) {
+        rankBadge.textContent = rank.label;
+        rankBadge.className = `rank-badge ${rank.className}`;
+      }
+      if (rankMessage) rankMessage.textContent = rank.message;
 
       setTimeout(() => {
-        victoryOverlay.classList.remove('hidden');
+        if (victoryOverlay) victoryOverlay.classList.remove('hidden');
       }, 450);
     }
   } else {
@@ -203,23 +203,23 @@ function getRank(attemptsValue, timeValue) {
 }
 
 function startPreGameCountdown() {
-  startScreen.classList.add('hidden');
-  preGameOverlay.classList.remove('hidden');
+  if (startScreen) startScreen.classList.add('hidden');
+  if (preGameOverlay) preGameOverlay.classList.remove('hidden');
 
   let count = 3;
-  preGameNumber.textContent = count;
+  if (preGameNumber) preGameNumber.textContent = count;
 
   const interval = setInterval(() => {
     count--;
 
     if (count <= 0) {
       clearInterval(interval);
-      preGameOverlay.classList.add('hidden');
+      if (preGameOverlay) preGameOverlay.classList.add('hidden');
       initGameplay();
       return;
     }
 
-    preGameNumber.textContent = count;
+    if (preGameNumber) preGameNumber.textContent = count;
   }, 1000);
 }
 
@@ -233,8 +233,8 @@ function initGameplay() {
   firstCard = null;
   secondCard = null;
 
-  attemptsElement.textContent = attempts;
-  victoryOverlay.classList.add('hidden');
+  if (attemptsElement) attemptsElement.textContent = attempts;
+  if (victoryOverlay) victoryOverlay.classList.add('hidden');
 
   lockBoard = true;
 
@@ -242,11 +242,11 @@ function initGameplay() {
   if (gameTimer) clearInterval(gameTimer);
 
   let previewTime = 10;
-  gameTimerView.textContent = String(previewTime);
+  if (gameTimerView) gameTimerView.textContent = String(previewTime);
 
   previewTimer = setInterval(() => {
     previewTime--;
-    gameTimerView.textContent = String(previewTime);
+    if (gameTimerView) gameTimerView.textContent = String(previewTime);
 
     if (previewTime <= 0) {
       clearInterval(previewTimer);
@@ -328,7 +328,9 @@ async function createShareImage() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
 
-  const name = (playerNameInput && playerNameInput.value ? playerNameInput.value : '').trim() || 'Jogador';
+  const name =
+    (playerNameInput && playerNameInput.value ? playerNameInput.value : '').trim() ||
+    'Jogador';
 
   const W = canvas.width;
   const H = canvas.height;
@@ -340,6 +342,7 @@ async function createShareImage() {
 
   const nameFont = fitText(ctx, name, W * 0.56, Math.round(H * 0.028), 'Arial');
   ctx.font = `bold ${nameFont}px Arial`;
+
   ctx.fillText(name, W * 0.5, H * 0.332);
 
   ctx.font = `bold ${Math.round(H * 0.038)}px Arial`;
