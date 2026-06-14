@@ -194,8 +194,7 @@
 
     .overlay-content button,
     .music-button,
-    .share-button,
-    .photo-button{
+    .share-button{
         border:none;
         cursor:pointer;
         border-radius:12px;
@@ -205,8 +204,7 @@
 
     .overlay-content button:hover,
     .music-button:hover,
-    .share-button:hover,
-    .photo-button:hover{
+    .share-button:hover{
         transform:translateY(-1px);
     }
 
@@ -218,6 +216,26 @@
 
     .hidden{
         display:none !important;
+    }
+
+    #preGameOverlay{
+        background:rgba(0,0,0,0.58);
+        z-index:2100;
+    }
+
+    #preGameNumber{
+        font-size:clamp(84px, 16vw, 132px);
+        font-weight:800;
+        color:#fff;
+        line-height:1;
+        animation:pulseCount 1s ease-in-out infinite;
+        text-shadow:0 8px 22px rgba(0,0,0,.25);
+    }
+
+    @keyframes pulseCount{
+        0%{ transform:scale(.75); opacity:.55; }
+        50%{ transform:scale(1.08); opacity:1; }
+        100%{ transform:scale(1); opacity:.85; }
     }
 
     .start-overlay{
@@ -370,6 +388,10 @@
     </div>
 </div>
 
+<div class="overlay hidden" id="preGameOverlay">
+    <div id="preGameNumber">3</div>
+</div>
+
 <header>
     <img src="assets/logo.png" class="logo" alt="Logo do projeto">
 </header>
@@ -378,8 +400,8 @@
 
 <div class="top-info">
     <div class="info-box">
-        <div class="info-title">Tempo restante</div>
-        <div class="info-value" id="countdown">10</div>
+        <div class="info-title">Tempo de Jogo</div>
+        <div class="info-value" id="gameTimerView">10</div>
     </div>
 
     <div class="info-box">
@@ -414,16 +436,13 @@
         </div>
 
         <div class="victory-actions">
-            <button id="photoButton" class="photo-button">Adicionar foto de perfil</button>
-            <button id="shareButton" class="share-button">Compartilhar nos stories</button>
+            <button id="shareButton" class="share-button">Compartilhe essa conquista!</button>
             <button onclick="restartGame()" class="restart-button">Reiniciar jogo</button>
         </div>
     </div>
 </div>
 
-<input type="file" id="profilePhotoInput" accept="image/*" class="hidden">
-
-<canvas id="shareCanvas" width="1080" height="1350"></canvas>
+<canvas id="shareCanvas" width="1080" height="1920"></canvas>
 
 <audio id="flipSound" src="sounds/flip.mp3" preload="auto"></audio>
 <audio id="matchSound" src="sounds/match.mp3" preload="auto"></audio>
@@ -432,30 +451,23 @@
 <audio id="bgMusic" src="sounds/music.mp3" preload="auto" loop></audio>
 
 <script>
-    const cardImages = [
-        'assets/par1.jpg',
-        'assets/par2.jpg',
-        'assets/par3.jpg',
-        'assets/par4.jpg'
-    ];
-
-    let cards = [...cardImages, ...cardImages];
-
     const board = document.getElementById('gameBoard');
-    const countdownElement = document.getElementById('countdown');
+    const gameTimerView = document.getElementById('gameTimerView');
     const attemptsElement = document.getElementById('attempts');
-    const victoryOverlay = document.getElementById('victoryOverlay');
-    const startScreen = document.getElementById('startScreen');
-    const startButton = document.getElementById('startButton');
-    const musicButton = document.getElementById('musicButton');
-    const shareButton = document.getElementById('shareButton');
-    const photoButton = document.getElementById('photoButton');
-    const profilePhotoInput = document.getElementById('profilePhotoInput');
 
-    const rankBadge = document.getElementById('rankBadge');
-    const rankMessage = document.getElementById('rankMessage');
+    const startScreen = document.getElementById('startScreen');
+    const preGameOverlay = document.getElementById('preGameOverlay');
+    const preGameNumber = document.getElementById('preGameNumber');
+    const victoryOverlay = document.getElementById('victoryOverlay');
+
     const finalTime = document.getElementById('finalTime');
     const finalAttempts = document.getElementById('finalAttempts');
+    const rankBadge = document.getElementById('rankBadge');
+    const rankMessage = document.getElementById('rankMessage');
+
+    const startButton = document.getElementById('startButton');
+    const shareButton = document.getElementById('shareButton');
+    const musicButton = document.getElementById('musicButton');
 
     const flipSound = document.getElementById('flipSound');
     const matchSound = document.getElementById('matchSound');
@@ -466,6 +478,14 @@
     const shareCanvas = document.getElementById('shareCanvas');
     const shareCtx = shareCanvas.getContext('2d');
 
+    const cardImages = [
+        'assets/par1.jpg',
+        'assets/par2.jpg',
+        'assets/par3.jpg',
+        'assets/par4.jpg'
+    ];
+
+    let cards = [...cardImages, ...cardImages];
     let firstCard = null;
     let secondCard = null;
     let lockBoard = true;
@@ -473,13 +493,10 @@
     let attempts = 0;
     let matches = 0;
 
-    let previewCountdown = 10;
     let previewTimer = null;
     let gameTimer = null;
     let gameSeconds = 0;
     let musicMuted = false;
-
-    let profilePhotoDataUrl = null;
 
     function shuffle(array){
         array.sort(() => Math.random() - 0.5);
@@ -508,7 +525,7 @@
 
         cards.forEach(image => {
             const card = document.createElement('div');
-            card.classList.add('card');
+            card.classList.add('card', 'flipped');
             card.dataset.image = image;
 
             card.innerHTML = `
@@ -522,7 +539,6 @@
                 </div>
             `;
 
-            card.classList.add('flipped');
             card.addEventListener('click', flipCard);
             board.appendChild(card);
         });
@@ -537,9 +553,11 @@
     function startGameTimer(){
         if(gameTimer) clearInterval(gameTimer);
         gameSeconds = 0;
+        gameTimerView.textContent = '00:00';
 
         gameTimer = setInterval(() => {
             gameSeconds++;
+            gameTimerView.textContent = formatTime(gameSeconds);
         }, 1000);
     }
 
@@ -549,7 +567,6 @@
         if(this.classList.contains('matched')) return;
 
         playSound(flipSound);
-
         this.classList.add('flipped');
 
         if(!firstCard){
@@ -571,7 +588,6 @@
 
         if(isMatch){
             playSound(matchSound);
-
             firstCard.classList.add('matched');
             secondCard.classList.add('matched');
 
@@ -637,41 +653,60 @@
         };
     }
 
-    function startCountdown(){
+    function startPreGameCountdown(){
+        startScreen.classList.add('hidden');
+        preGameOverlay.classList.remove('hidden');
+
+        let count = 3;
+        preGameNumber.textContent = count;
+
+        const interval = setInterval(() => {
+            count--;
+            if(count <= 0){
+                clearInterval(interval);
+                preGameOverlay.classList.add('hidden');
+                initGameplay();
+                return;
+            }
+            preGameNumber.textContent = count;
+        }, 1000);
+    }
+
+    function initGameplay(){
         createBoard();
 
-        previewCountdown = 10;
         attempts = 0;
         matches = 0;
         gameSeconds = 0;
         firstCard = null;
         secondCard = null;
-        lockBoard = true;
 
         attemptsElement.textContent = attempts;
-        countdownElement.textContent = previewCountdown;
         victoryOverlay.classList.add('hidden');
+
+        lockBoard = true;
 
         if(previewTimer) clearInterval(previewTimer);
         if(gameTimer) clearInterval(gameTimer);
 
-        const allCards = document.querySelectorAll('.card');
-        allCards.forEach(card => card.classList.add('flipped'));
+        let previewTime = 10;
+        gameTimerView.textContent = String(previewTime);
 
         previewTimer = setInterval(() => {
-            previewCountdown--;
-
-            if(previewCountdown <= 0){
-                previewCountdown = 0;
-                countdownElement.textContent = previewCountdown;
-
+            previewTime--;
+            if(previewTime <= 0){
                 clearInterval(previewTimer);
-                hideCards();
+
+                document.querySelectorAll('.card').forEach(card => {
+                    card.classList.remove('flipped');
+                });
+
+                lockBoard = false;
                 startGameTimer();
                 return;
             }
 
-            countdownElement.textContent = previewCountdown;
+            gameTimerView.textContent = String(previewTime);
         }, 1000);
     }
 
@@ -679,22 +714,25 @@
         location.reload();
     }
 
-    function drawRoundedRect(ctx, x, y, w, h, r){
-        ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.arcTo(x + w, y, x + w, y + h, r);
-        ctx.arcTo(x + w, y + h, x, y + h, r);
-        ctx.arcTo(x, y + h, x, y, r);
-        ctx.arcTo(x, y, x + w, y, r);
-        ctx.closePath();
+    function fitText(ctx, text, maxWidth, initialFontSize, fontFamily = 'Arial'){
+        let size = initialFontSize;
+        ctx.font = `bold ${size}px ${fontFamily}`;
+        while(ctx.measureText(text).width > maxWidth && size > 14){
+            size -= 1;
+            ctx.font = `bold ${size}px ${fontFamily}`;
+        }
+        return size;
     }
 
     function loadImage(src){
         return new Promise((resolve, reject) => {
             const img = new Image();
+            if(!src.startsWith('data:')){
+                img.crossOrigin = 'anonymous';
+            }
             img.onload = () => resolve(img);
             img.onerror = reject;
-            img.src = src;
+            img.src = src.startsWith('data:') ? src : `${src}?v=${Date.now()}`;
         });
     }
 
@@ -716,164 +754,59 @@
     }
 
     async function createShareImage(){
+        const rank = getRank(attempts, gameSeconds);
 
-    const rank = getRank(attempts, gameSeconds);
+        const templateMap = {
+            gold: 'assets/6.png',
+            silver: 'assets/7.png',
+            bronze: 'assets/8.png'
+        };
 
-    const templateMap = {
-        gold: 'assets/story-ouro.png',
-        silver: 'assets/story-prata.png',
-        bronze: 'assets/story-bronze.png'
-    };
+        const templateSrc = templateMap[rank.className] || templateMap.gold;
+        const template = await loadImage(templateSrc);
 
-    const templateSrc =
-        templateMap[rank.className] || templateMap.gold;
+        const canvas = shareCanvas;
+        const ctx = shareCtx;
 
-    const canvas = shareCanvas;
-    const ctx = shareCtx;
+        canvas.width = 1080;
+        canvas.height = 1920;
 
-    canvas.width = 1080;
-    canvas.height = 1920;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
 
-    // =========================
-    // FUNDO ORIGINAL
-    // =========================
+        const name = (document.getElementById('playerName')?.value || '').trim() || 'Jogador';
 
-    const template = await loadImage(templateSrc);
+        const W = canvas.width;
+        const H = canvas.height;
 
-    ctx.drawImage(
-        template,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+        ctx.fillStyle = '#c47e16';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
-    // =========================
-    // TEMPO
-    // =========================
+        const nameFont = fitText(ctx, name, W * 0.58, Math.round(H * 0.036), 'Arial');
+        ctx.font = `bold ${nameFont}px Arial`;
+        ctx.fillText(name, W * 0.5, H * 0.282);
 
-    ctx.fillStyle = '#c47e16';
+        ctx.font = `bold ${Math.round(H * 0.018)}px Arial`;
+        ctx.fillText('Tempo', W * 0.307, H * 0.398);
+        ctx.fillText('Tentativas', W * 0.694, H * 0.398);
 
-    ctx.font = 'bold 52px Arial';
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    ctx.fillText(
-        formatTime(gameSeconds),
-        310,
-        625
-    );
-
-    // =========================
-    // TENTATIVAS
-    // =========================
-
-    ctx.fillText(
-        String(attempts).padStart(2, '0'),
-        770,
-        625
-    );
-
-    // =========================
-    // FOTO DO PERFIL
-    // =========================
-
-    if(profilePhotoDataUrl){
-
-        try{
-
-            const userImg =
-                await loadImage(profilePhotoDataUrl);
-
-            const centerX = 305;
-            const centerY = 1460;
-            const radius = 225;
-
-            ctx.save();
-
-            ctx.beginPath();
-
-            ctx.arc(
-                centerX,
-                centerY,
-                radius,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.closePath();
-
-            ctx.clip();
-
-            // COVER
-            const imgRatio =
-                userImg.width / userImg.height;
-
-            const boxSize = radius * 2;
-
-            let drawWidth;
-            let drawHeight;
-
-            if(imgRatio > 1){
-
-                drawHeight = boxSize;
-                drawWidth = userImg.width *
-                    (boxSize / userImg.height);
-
-            }else{
-
-                drawWidth = boxSize;
-                drawHeight = userImg.height *
-                    (boxSize / userImg.width);
-            }
-
-            const offsetX =
-                centerX - drawWidth / 2;
-
-            const offsetY =
-                centerY - drawHeight / 2;
-
-            ctx.drawImage(
-                userImg,
-                offsetX,
-                offsetY,
-                drawWidth,
-                drawHeight
-            );
-
-            ctx.restore();
-
-            // BORDA
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 12;
-
-            ctx.beginPath();
-
-            ctx.arc(
-                centerX,
-                centerY,
-                radius,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.stroke();
-
-        }catch(e){}
+        ctx.font = `bold ${Math.round(H * 0.052)}px Arial`;
+        ctx.fillText(formatTime(gameSeconds), W * 0.307, H * 0.447);
+        ctx.fillText(String(attempts).padStart(2, '0'), W * 0.694, H * 0.447);
     }
-}
 
     async function shareToStories(){
         try{
             await createShareImage();
 
             const blob = await canvasToBlob(shareCanvas);
-            if(!blob) return;
+            if(!blob) throw new Error('Falha ao gerar imagem.');
 
-            const file = new File([blob], 'resultado-jogo-memoria.png', { type: 'image/png' });
+            const file = new File([blob], 'conquista-raizes-crioulas.png', { type: 'image/png' });
 
             const canShareFiles =
                 typeof navigator.share === 'function' &&
@@ -886,8 +819,8 @@
                 try{
                     await navigator.share({
                         files: [file],
-                        title: 'Meu resultado no jogo da memória',
-                        text: 'Completei o jogo da biodiversidade crioula!'
+                        title: 'Jogo da Memória',
+                        text: 'Olha a minha conquista no Jogo da Memória - Raízes da Biodiversidade Crioula do Piauí!'
                     });
                     return;
                 }catch(e){}
@@ -896,26 +829,22 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'resultado-jogo-memoria.png';
+            a.download = 'conquista-raizes-crioulas.png';
             document.body.appendChild(a);
             a.click();
             a.remove();
-
             setTimeout(() => URL.revokeObjectURL(url), 1500);
 
-            alert('A imagem foi baixada. No celular, abra a imagem e compartilhe nos stories.');
-        }catch(err){
-            alert('Não foi possível gerar a imagem para compartilhar.');
+            alert('Imagem baixada! Agora você pode postá-la diretamente nos seus Stories.');
+        }catch(error){
+            alert('Erro ao gerar imagem de compartilhamento.');
         }
     }
 
     startButton.addEventListener('click', () => {
-        startScreen.classList.add('hidden');
-
         bgMusic.volume = 0.25;
         bgMusic.play().catch(() => {});
-
-        startCountdown();
+        startPreGameCountdown();
     });
 
     musicButton.addEventListener('click', () => {
@@ -930,26 +859,9 @@
         }
     });
 
-    photoButton.addEventListener('click', () => {
-        profilePhotoInput.click();
-    });
-
-    profilePhotoInput.addEventListener('change', () => {
-        const file = profilePhotoInput.files && profilePhotoInput.files[0];
-        if(!file) return;
-
-        const reader = new FileReader();
-        reader.onload = () => {
-            profilePhotoDataUrl = reader.result;
-            photoButton.textContent = 'Foto adicionada ✓';
-        };
-        reader.readAsDataURL(file);
-    });
-
     shareButton.addEventListener('click', shareToStories);
-
-    startCountdown();
 </script>
+
 
 </body>
 </html>
