@@ -340,12 +340,7 @@ async function createShareImage() {
 
   const nameFont = fitText(ctx, name, W * 0.56, Math.round(H * 0.028), 'Arial');
   ctx.font = `bold ${nameFont}px Arial`;
-
   ctx.fillText(name, W * 0.5, H * 0.332);
-
-  ctx.font = `bold ${Math.round(H * 0.016)}px Arial`;
-  ctx.fillText('Tempo', W * 0.307, H * 0.396);
-  ctx.fillText('Tentativas', W * 0.694, H * 0.396);
 
   ctx.font = `bold ${Math.round(H * 0.038)}px Arial`;
   ctx.fillText(formatTime(gameSeconds), W * 0.307, H * 0.490);
