@@ -305,60 +305,46 @@ function canvasToBlob(canvas) {
 }
 
 async function createShareImage() {
-  const rank = getRank(attempts, gameSeconds);
-
-  const templateMap = {
-    gold: 'assets/3.png',
-    silver: 'assets/4.png',
-    bronze: 'assets/5.png'
-  };
-
-  const templateSrc = templateMap[rank.className] || templateMap.gold;
-  const canvas = shareCanvas;
-  const ctx = shareCtx;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  const template = await loadImage(templateSrc);
-  ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
-
-  const playerName = (playerNameInput?.value || '').trim() || 'Jogador';
-
-  // Configuração base do texto
-  ctx.fillStyle = '#be7612'; 
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  // 1. CORREÇÃO DO NOME: Ajustado para o centro vertical da caixa (Y: 645)
-  ctx.font = 'bold 50px Arial';
-  ctx.fillText(playerName, 540, 645);
-
-  // 2. CORREÇÃO DO TEMPO E TENTATIVAS: Centralizados no eixo X de cada caixa (X: 310 e X: 770)
-  ctx.font = 'bold 54px Arial';
-  ctx.fillText(formatTime(gameSeconds), 310, 856); // Caixa esquerda
-  ctx.fillText(String(attempts).padStart(2, '0'), 770, 856); // Caixa direita
-
-  // 3. AJUSTE DO TEXTO DO RANKING (OURO/PRATA/BRONZE)
-  ctx.font = 'bold 44px Arial';
-  ctx.fillText(rank.label, 540, 1100);
-
-  // 4. CORREÇÃO DA QUEBRA DE LINHA DO TEXTO DE FEEDBACK
-  ctx.font = '32px Arial';
-  ctx.fillStyle = '#555555'; // Tom mais suave para a mensagem
+  const rank = getRank(attempts, gameSeconds); [cite: 40]
   
-  // Função interna simples para desenhar texto em duas linhas se for muito grande
-  const message = rank.message;
-  if (message.length > 40) {
-    // Divide a frase aproximadamente a meio para não cortar as palavras
-    const meio = message.lastIndexOf(' ', 40);
-    const linha1 = message.substring(0, meio);
-    const linha2 = message.substring(meio + 1);
-    
-    ctx.fillText(linha1, 540, 1180);
-    ctx.fillText(linha2, 540, 1230);
-  } else {
-    ctx.fillText(message, 540, 1200);
-  }
+  // Atualizado para usar os novos arquivos de imagem mapeados pelo rank
+  const templateMap = {
+    gold: 'assets/6.png',    // Imagem limpa para o Rank OURO
+    silver: 'assets/7.png',  // Imagem limpa para o Rank PRATA
+    bronze: 'assets/8.png'   // Imagem limpa para o Rank BRONZE
+  };
+  
+  const templateSrc = templateMap[rank.className] || templateMap.gold; [cite: 42]
+  const canvas = shareCanvas; [cite: 42]
+  const ctx = shareCtx; [cite: 42]
+
+  // Limpa o canvas antes de desenhar
+  ctx.clearRect(0, 0, canvas.width, canvas.height); [cite: 42]
+  
+  // Carrega e desenha o template de fundo limpo
+  const template = await loadImage(templateSrc); [cite: 43]
+  ctx.drawImage(template, 0, 0, canvas.width, canvas.height); [cite: 43]
+
+  const playerName = (playerNameInput?.value || '').trim() || 'Jogador'; [cite: 43]
+  
+  // Configuração padrão de estilo dos textos
+  ctx.fillStyle = '#be7612';  [cite: 44]
+  ctx.textAlign = 'center'; [cite: 44]
+  ctx.textBaseline = 'middle'; [cite: 44]
+
+  // 1. NOME DO JOGADOR: Centralizado horizontalmente no canvas (X: 540) e ajustado na altura correta (Y: 320)
+  ctx.font = 'bold 45px Arial';
+  ctx.fillText(playerName, 540, 320); [cite: 46]
+
+  // 2. TEMPO E TENTATIVAS: Ajustados para os centros exatos dos balões menores (X: 340 e X: 740, Y: 475)
+  ctx.font = 'bold 50px Arial'; [cite: 46]
+  ctx.fillText(formatTime(gameSeconds), 340, 475); // Balão da Esquerda (Tempo) [cite: 47]
+  ctx.fillText(String(attempts).padStart(2, '0'), 740, 475); // Balão da Direita (Tentativas) [cite: 47]
+
+  // 3. TEXTO DO RANKING: Centralizado no balão inferior (X: 540, Y: 635)
+  ctx.fillStyle = '#be7612';  [cite: 50]
+  ctx.font = 'bold 40px Arial'; [cite: 48]
+  ctx.fillText(rank.label, 540, 635); [cite: 49]
 }
 
 async function shareToStories() {
