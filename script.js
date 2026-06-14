@@ -324,6 +324,7 @@ async function createShareImage() {
 
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
 
@@ -337,17 +338,17 @@ async function createShareImage() {
   ctx.textBaseline = 'middle';
   ctx.fillStyle = brown;
 
-  const nameFont = fitText(ctx, name, W * 0.58, Math.round(H * 0.036), 'Arial');
+  const nameFont = fitText(ctx, name, W * 0.58, Math.round(H * 0.03), 'Arial');
   ctx.font = `bold ${nameFont}px Arial`;
-  ctx.fillText(name, W * 0.5, H * 0.282);
+  ctx.fillText(name, W * 0.5, H * 0.286);
 
-  ctx.font = `bold ${Math.round(H * 0.018)}px Arial`;
-  ctx.fillText('Tempo', W * 0.307, H * 0.398);
-  ctx.fillText('Tentativas', W * 0.694, H * 0.398);
+  ctx.font = `bold ${Math.round(H * 0.016)}px Arial`;
+  ctx.fillText('Tempo', W * 0.307, H * 0.392);
+  ctx.fillText('Tentativas', W * 0.694, H * 0.392);
 
-  ctx.font = `bold ${Math.round(H * 0.052)}px Arial`;
-  ctx.fillText(formatTime(gameSeconds), W * 0.307, H * 0.447);
-  ctx.fillText(String(attempts).padStart(2, '0'), W * 0.694, H * 0.447);
+  ctx.font = `bold ${Math.round(H * 0.046)}px Arial`;
+  ctx.fillText(formatTime(gameSeconds), W * 0.307, H * 0.449);
+  ctx.fillText(String(attempts).padStart(2, '0'), W * 0.694, H * 0.449);
 }
 
 async function shareToStories() {
